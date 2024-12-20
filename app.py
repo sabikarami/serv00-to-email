@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 # 全局变量
 sid = 1  # SID为服务器编号，比如https://panel1.serv00.com,这就填panel后面的数字1
 uname = ""  # 用户名
-pwd = ""  # 密码
+pwd = ""  # 密码!!!务必将serv00的邮箱密码改为和你登录密码相同的密码!!!
 to_email = ""  # 接收邮箱地址
 
 login_url = f"https://panel{sid}.serv00.com/login/"
