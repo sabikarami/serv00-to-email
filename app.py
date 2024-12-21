@@ -3,10 +3,10 @@ from bs4 import BeautifulSoup
 
 '''
 !!!务必将serv00的邮箱密码改为和你登录密码相同的密码!!!
-sid为服务器编号，比如https://panel1.serv00.com,这就填panel后面的数字1
-uname = ""  # 用户名
-pwd = ""  # 密码
-to_email = ""  # 接收邮箱地址
+sid为服务器编号，比如https://panel15.serv00.com,这就填panel后面的数字1
+uname = ""  # sahbii96
+pwd = ""  # 852654Saheb!
+to_email = ""  # saheb.karami@gmail.com
 '''
 # 账户信息列表
 accounts = [
