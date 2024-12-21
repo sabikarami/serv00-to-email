@@ -1,16 +1,20 @@
 import requests
 from bs4 import BeautifulSoup
 
-# 全局变量
-sid = 1  # SID为服务器编号，比如https://panel1.serv00.com,这就填panel后面的数字1
+'''
+!!!务必将serv00的邮箱密码改为和你登录密码相同的密码!!!
+sid为服务器编号，比如https://panel1.serv00.com,这就填panel后面的数字1
 uname = ""  # 用户名
-pwd = ""  # 密码!!!务必将serv00的邮箱密码改为和你登录密码相同的密码!!!
+pwd = ""  # 密码
 to_email = ""  # 接收邮箱地址
+'''
+# 账户信息列表
+accounts = [
+    {"sid": 0, "uname": "", "pwd": "", "to_email": ""},
+    {"sid": 1, "uname": "", "pwd": "", "to_email": ""},
+    # 添加更多账号
+]
 
-login_url = f"https://panel{sid}.serv00.com/login/"
-details_url = f"https://panel{sid}.serv00.com/mail/details/{uname}.serv00.net"
-mail_url = "https://mail.serv00.com/?_task=login"
-cp_url = "https://mail.serv00.com/?_task=mail&_action=compose"
 sess = requests.Session()
 
 # 获取CSRF令牌
@@ -38,20 +42,32 @@ def login(uname, pwd, url):
         "Referer": url,
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0 Safari/537.36",
     }
-    resp = sess.post(url, data=payload, headers=headers)
-    if resp.status_code == 200 or resp.status_code == 302:
-        print("登录成功！")
-        return resp.text
+    resp = sess.post(url, data=payload, headers=headers, allow_redirects=False)
+
+    if resp.status_code == 302:
+        redirect_url = resp.headers.get('Location')
+        if redirect_url == '/':
+            redirect_resp = sess.get(f"https://panel0.serv00.com{redirect_url}", headers=headers)
+            if redirect_resp.status_code == 200:
+                print("登录成功！")
+                return redirect_resp.text
+            else:
+                print(f"登录失败，err：{redirect_resp.status_code}")
+        else:
+            print(f"登录失败，err：{redirect_url}")
+    elif resp.status_code == 200:
+        print("登录失败")
     else:
         print(f"登录失败，err：{resp.status_code}")
-        return None
+
+    return None
 
 # 获取email用户名
-def get_email(uname):
-    url = details_url.format(uname=uname)
+def get_email(uname, sid):
+    url = f"https://panel{sid}.serv00.com/mail/details/{uname}.serv00.net"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0 Safari/537.36",
-        "Referer": login_url,
+        "Referer": f"https://panel{sid}.serv00.com/login/",
     }
     resp = sess.get(url, headers=headers)
     if resp.status_code == 200:
@@ -180,16 +196,27 @@ def send_email(cp_url, to_email, uname):
         print(f"邮件发送失败，err：{resp.status_code}")
 
 if __name__ == "__main__":
-    if login(uname, pwd, login_url):
-        email_data = get_email(uname)
-        if email_data:
-            if mail_login(email_data, pwd):
-                cp_url_real = get_cp_url()
-                if cp_url_real:
-                    send_email(cp_url_real, to_email, uname)
+    for account in accounts:
+        sid = account["sid"]
+        uname = account["uname"]
+        pwd = account["pwd"]
+        to_email = account["to_email"]
+        login_url = f"https://panel{sid}.serv00.com/login/"
+        mail_url = "https://mail.serv00.com/?_task=login"
+        cp_url = "https://mail.serv00.com/?_task=mail&_action=compose"
+
+        if login(uname, pwd, login_url):
+            email_data = get_email(uname, sid)
+            if email_data:
+                if mail_login(email_data, pwd):
+                    cp_url_real = get_cp_url()
+                    if cp_url_real:
+                        send_email(cp_url_real, to_email, uname)
+                    else:
+                        print("访问发邮件页面失败")
                 else:
-                    print("访问发邮件页面失败")
+                    print(f"使用{email_data} 登录失败")
             else:
-                print(f"使用{email_data} 登录失败")
+                print("未能获取email")
         else:
-            print("未能获取email")
+            print(f"账户 {uname} 登录失败")
